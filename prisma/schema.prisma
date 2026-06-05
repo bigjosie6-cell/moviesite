@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+
+
+model User {
+  id            Int           @id @default(autoincrement())
+  email         String        @unique
+  passwordHash  String
+  role          String        @default("USER")
+  subscription  Subscription?
+  watchHistory  WatchHistory[]
+  createdAt     DateTime      @default(now())
+}
+
+// Removed enum Role definition as SQLite does not support enums
+
+model Subscription {
+  id                Int      @id @default(autoincrement())
+  user              User     @relation(fields: [userId], references: [id])
+  userId            Int      @unique
+  stripeCustomerId  String
+  stripeSubsId      String
+  status            String   // active, trialing, cancelled, etc.
+  createdAt         DateTime @default(now())
+}
+
+model Movie {
+  id           Int      @id @default(autoincrement())
+  title        String
+  posterUrl    String
+  description  String
+  genre        String
+  releaseYear  Int
+  rating       Float
+  trailerUrl   String
+  streamingUrl String   // base S3 key (e.g., "movies/123.mp4")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  watchHistory WatchHistory[]
+}
+
+model WatchHistory {
+  id        Int      @id @default(autoincrement())
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  movie     Movie    @relation(fields: [movieId], references: [id])
+  movieId   Int
+  watchedAt DateTime @default(now())
+}
